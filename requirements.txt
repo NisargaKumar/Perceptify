@@ -1,0 +1,8 @@
+streamlit
+langchain
+google-cloud
+pytorch
+opencv-python
+pillow
+pytesseract
+google-cloud-vision
