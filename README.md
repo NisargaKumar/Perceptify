@@ -39,10 +39,13 @@ Perceptify is an AI-powered platform designed to assist visually impaired indivi
 ## Project Structure
 
 perceptify/
-├── app.py                 # Main Streamlit app
-├── requirements.txt       # Dependencies
-├── config/                # Google Cloud credentials
-└── README.md              # Documentation
+├── app.py                # Main Streamlit app  
+├── requirements.txt      # Dependencies  
+├── config/               # Google Cloud credentials  
+│   ├── google_cloud.json # Google Cloud credentials file  
+├── static/               # Static files (images, icons, etc.)  
+├── utils/                # Utility functions for object detection, image processing, etc.  
+├── README.md             # Documentation  
 
 ## API Usage
 
