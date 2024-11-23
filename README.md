@@ -33,9 +33,9 @@ streamlit run app.py
 # ## Project Structure
 
 # perceptify/
-# ├── app.py                 # Main app (Streamlit)
+# ├── app.py                 # Main Streamlit app
 # ├── requirements.txt       # Dependencies
-# └── config/                # Google Cloud credentials
+# ├── config/                # Google Cloud credentials
 # └── README.md              # Documentation
 
 # ## API Usage
