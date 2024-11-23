@@ -1,70 +1,46 @@
-#!/bin/bash
-
-# ===============================
 # Perceptify - AI for Visually Impaired
-# ===============================
 
-# Welcome to **Perceptify**, an AI-powered platform designed to assist visually impaired individuals
-# with real-time scene understanding, text-to-speech conversion, object detection, and personalized
-# assistance for daily tasks. This script will help you set up and run the project locally.
+# **Perceptify** is an AI-powered platform designed to assist visually impaired individuals with real-time scene understanding, text-to-speech conversion, object detection, and personalized assistance for daily tasks.
 
-# ===============================
-# 1. Clone the Repository
-# ===============================
-echo "Cloning the Perceptify repository..."
+# ## Features
+
+# ### 1. **Real-Time Scene Understanding 👁️**
+#    - AI identifies and describes objects in the environment.
+
+# ### 2. **Text-to-Speech Conversion 🎙️**
+#    - Converts extracted text from images into speech.
+
+# ### 3. **Object Detection 🔍**
+#    - Detects and classifies objects in uploaded images.
+
+# ### 4. **Personalized Assistance 🤖**
+#    - Users can ask questions and get answers based on the image content.
+
+# ## Installation & Setup
+
+# - Clone the repository:
 git clone https://github.com/yourusername/perceptify.git
-cd perceptify || exit
+cd perceptify
 
-# ===============================
-# 2. Install Dependencies
-# ===============================
-echo "Installing required dependencies..."
+# - Install dependencies:
 pip install -r requirements.txt
 
-# ===============================
-# 3. Set Up Google Cloud Credentials
-# ===============================
-# Ensure that you've set up your Google Cloud Vision and Text-to-Speech API credentials
-# Create and download the JSON key file from Google Cloud Console, then set the environment variable
-# for authentication as follows:
+# - Set up Google Cloud credentials and API keys for Vision and Text-to-Speech APIs.
 
-echo "Setting up Google Cloud credentials..."
-export GOOGLE_APPLICATION_CREDENTIALS="config/your-google-cloud-credentials.json"
-
-# ===============================
-# 4. Set Up API Keys for Gemini (Google Generative AI)
-# ===============================
-# Replace with your own API key from Google Cloud for Gemini
-export GOOGLE_API_KEY="your-google-api-key"
-
-# ===============================
-# 5. Run the Streamlit App
-# ===============================
-echo "Starting the Perceptify app with Streamlit..."
+# - Run the Streamlit app:
 streamlit run app.py
 
-# ===============================
-# Project Structure
-# ===============================
-echo "
-Project Structure:
+# ## Project Structure
 
-perceptify/
-├── app.py                 # Main app (Streamlit)
-├── requirements.txt       # Python dependencies
-├── config/                # Google Cloud credentials
-├── README.md              # Project documentation
-"
+# perceptify/
+# ├── app.py                 # Main app (Streamlit)
+# ├── requirements.txt       # Dependencies
+# └── config/                # Google Cloud credentials
+# └── README.md              # Documentation
 
-# ===============================
-# Usage Instructions
-# ===============================
-echo "
-Usage Instructions:
+# ## API Usage
 
-1. Clone the repository using 'git clone'.
-2. Install the required dependencies with 'pip install -r requirements.txt'.
-3. Set up Google Cloud Vision and Text-to-Speech API credentials.
-4. Set your API keys for Google Gemini (Generative AI).
-5. Run the app using 'streamlit run app.py'.
-"
+# - **Scene Understanding**: Upload an image for scene analysis.
+# - **Text-to-Speech**: Upload an image containing text for speech conversion.
+# - **Object Detection**: Upload an image for object detection and classification.
+# - **Personalized Assistance**: Ask questions based on the uploaded image.
