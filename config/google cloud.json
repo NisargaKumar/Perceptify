@@ -1,8 +1,0 @@
-# Configuring Google Cloud Credentials
-
-To use Google Cloud Vision and Text-to-Speech APIs, you need to download your Google Cloud credentials file (usually named `google_cloud.json`).
-
-1. Go to the [Google Cloud Console](https://console.cloud.google.com/).
-2. Navigate to your project and create a service account key with the necessary permissions.
-3. Download the credentials file as `google_cloud.json`.
-4. Place the `google_cloud.json` file here
