@@ -11,16 +11,13 @@ import google.generativeai as genai
 from langchain_google_genai import GoogleGenerativeAI
 from gtts import gTTS
 
-# Set the environment variable to authenticate with Google Cloud API
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "config/beaming-figure-410717-49125f99c9d7.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "config/your-google-cloud-vision.json" #Your gcloud vision file here
 
-# Initialize Google Generative AI with API Key
-GEMINI_API_KEY = "AIzaSyCQOTmrZR9Pha8Opc6dR7vE_kOgA5d2zhc"  # Replace with your valid API key
+GEMINI_API_KEY = ""  #Your gemini API Key Here
 os.environ["GOOGLE_API_KEY"] = GEMINI_API_KEY
 
 llm = GoogleGenerativeAI(model="gemini-1.5-pro", api_key=GEMINI_API_KEY)
 
-# Initialize Text-to-Speech engine
 engine = pyttsx3.init()
 
 st.set_page_config(
@@ -29,20 +26,38 @@ st.set_page_config(
     layout="wide", 
 )
 
-# Sidebar for Navigation
+#Sidebar
 st.sidebar.title("Features 🌟")
 options = st.sidebar.radio(
     "Select a Feature:",
     ("Home 🏠", "Real-Time Scene Understanding 👁️", "Text-to-Speech Conversion 🎙️", "Object Detection 🔍", "Personalized Assistance 🤖")
 )
 
-# Function to convert text to speech and play audio using gTTS (for multilingual support)
+client = vision.ImageAnnotatorClient()
+
 def text_to_speech(text, language='en'):
     tts = gTTS(text=text, lang=language)
     tts.save("output.mp3")
     return "output.mp3"
 
-# Full names of the languages for multilingual support
+def analyze_image(image_path):
+    with open(image_path, 'rb') as image_file:
+        content = image_file.read()
+    image = vision.Image(content=content)
+
+    response = client.text_detection(image=image)
+    texts = response.text_annotations
+
+    if not texts:
+        response = client.object_localization(image=image)
+        objects = response.localized_object_annotations
+        detected_objects = [obj.name for obj in objects]
+        return detected_objects
+    else:
+
+        extracted_text = texts[0].description
+        return extracted_text
+
 language_options = {
     "en": "English",
     "es": "Spanish",
@@ -56,7 +71,6 @@ language_options = {
     "zh": "Chinese",
 }
 
-# Home Page
 def home_page():
         st.title("Perceptify 🌍")
         st.subheader("AI-powered Solutions for the Visually Impaired 💡")
@@ -65,21 +79,20 @@ def home_page():
             Welcome to **Perceptify**, an innovative platform that uses AI to help visually impaired individuals navigate the world around them. 
             Our powerful tools include real-time scene understanding, text-to-speech conversion, object detection, and personalized assistance for daily tasks.
 
-            ### 🛠️ Features:
             - **Real-Time Scene Understanding 👁️**: Understand your surroundings with AI-powered scene analysis.
             - **Text-to-Speech Conversion 🎙️**: Convert text from images into speech for easier comprehension.
             - **Object Detection 🔍**: Detect and identify objects in your environment.
             - **Personalized Assistance 🤖**: Get dynamic information about detected objects and enhance your daily tasks.
 
-            ### 🌱 Get Started:
             Select a feature from the sidebar to begin your journey with Perceptify! 🚀
             """
         )
 
+# Home page
 if options == "Home 🏠":
     home_page()
 
-# Real-Time Scene Understanding 👁️ - F1
+# 1 - Real-Time Scene Understanding
 if options == "Real-Time Scene Understanding 👁️":
     st.header("Real-Time Scene Understanding 👁️")
     st.write("This feature helps you analyze images in real-time and understand the content using AI.")
@@ -144,37 +157,30 @@ if options == "Real-Time Scene Understanding 👁️":
                 st.subheader("AI Generated Scene Description (English)")
                 st.write(generated_text)
 
-                # English audio
-                # Audio playback without using 'caption' argument
                 audio_file_path = text_to_speech(generated_text)
                 audio_file = open(audio_file_path, "rb")
                 st.write("Audio description of the scene:")
                 st.audio(audio_file, format="audio/mp3")
 
-
             except Exception as e:
                 st.error(f"Error generating text: {e}")
 
-        # Multilingual Support (Language Selection)
         language_name = st.selectbox("Select Language for Description", list(language_options.values())) 
 
-        # Get the language code from the selected language name
         language_code = {v: k for k, v in language_options.items()}.get(language_name)
 
         if language_code:
             try:
-                # Translate to the selected language
+
                 translated_text = llm.generate(
                     prompts=[f"Translate the following text into {language_name}:\n{generated_text}"],
                     temperature=0.5,
                     max_tokens=200
                 ).generations[0][0].text
 
-                # Display the translated text
                 st.write(f"Translated Description ({language_name}):")
                 st.write(translated_text)
 
-                # Translated audio
                 audio_file_path_translated = text_to_speech(translated_text, language_code)
                 audio_file_translated = open(audio_file_path_translated, "rb")
                 st.audio(audio_file_translated, format="audio/mp3")
@@ -182,8 +188,7 @@ if options == "Real-Time Scene Understanding 👁️":
             except Exception as e:
                 st.error(f"Error generating translation: {e}")
 
-
-# Text-to-Speech Conversion 🎙️ - F2
+#2 - Text-to-Speech Conversion
 if options == "Text-to-Speech Conversion 🎙️":
     st.header("Text-to-Speech Conversion 🎙️")
     st.write("Upload an image and we'll convert any text within the image into speech, and guide you through it.")
@@ -257,20 +262,21 @@ if options == "Text-to-Speech Conversion 🎙️":
             except Exception as e:
                 st.error(f"Error generating summary: {e}")
 
-
-# Object Detection 🔍 - F3
+#3 - Object Detection 
 if options == "Object Detection 🔍":
     st.header("Object Detection 🔍")
-    st.write("Upload an image, or provide an image URL, and we'll detect objects in it.")
+    st.write("Detects objects in images and provides a description and suggestions.")
 
-    uploaded_file = st.file_uploader("Upload an Image for Object Detection", type=["png", "jpg", "jpeg"])
-    image_url = st.text_input("Or, paste an image URL here 🌐:")
+    uploaded_file = st.file_uploader("Upload an Image", type=["png", "jpg", "jpeg"])
 
-    if uploaded_file is None and not image_url:
-        st.warning("Please upload an image or provide a valid image URL.")
+    if uploaded_file is None:
+        image_url = st.text_input("Or, paste an image URL here 🌐:")
+    else:
+        image_url = None
 
     if uploaded_file:
         st.image(uploaded_file, caption="Uploaded Image", use_container_width=True)
+
         with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
             temp_file.write(uploaded_file.getbuffer())
             temp_image_path = temp_file.name
@@ -280,39 +286,61 @@ if options == "Object Detection 🔍":
             response = requests.get(image_url)
             img = Image.open(BytesIO(response.content))
             st.image(img, caption="Image from URL 🌐", use_container_width=True)
+
             with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as temp_file:
                 img.save(temp_file, format="JPEG")
                 temp_image_path = temp_file.name
         except Exception as e:
             st.error(f"Failed to load the image from URL: {e}")
+    else:
+        st.warning("Please upload an image or provide a valid URL.")
 
     if uploaded_file or image_url:
-        def detect_objects(image_path):
+        def detect_objects_in_image(image_path):
             client = vision.ImageAnnotatorClient()
             with open(image_path, 'rb') as image_file:
                 content = image_file.read()
             image = vision.Image(content=content)
             response = client.object_localization(image=image)
             objects = response.localized_object_annotations
-            detected_objects = ""
-            for obj in objects:
-                detected_objects += f"{obj.name} (confidence: {obj.score:.2f})\n"
-            return detected_objects
+            if objects:
+                detected_objects = [obj.name for obj in objects]
+                st.write(f"Objects Detected in the image 🏷️: {', '.join(detected_objects)}\n")
+                return detected_objects
+            else:
+                st.write("No objects detected in the image 🚫.")
+                return None
 
-        detected_objects = detect_objects(temp_image_path)
+        detected_objects = detect_objects_in_image(temp_image_path)
+
+        input_prompt = f"""
+        You are an AI assistant helping visually impaired individuals by describing detected objects. 
+        Please describe the following objects in the image and suggest what actions to take.
+        """
 
         if detected_objects:
-            st.write(f"Objects detected in the image 🧐:\n{detected_objects}")
-        else:
-            st.write("No objects detected in the image.")
+            try:
 
+                response = llm.generate(
+                    prompts=[f"{input_prompt}\n{', '.join(detected_objects)}"],  
+                    temperature=0.7,  
+                    max_tokens=500  
+                )
 
-# Personalized Assistance 🤖 - F4
+                st.subheader("AI Generated Object Description")
+                st.write(response.generations[0][0].text)
+
+                audio_file_path = text_to_speech(response.generations[0][0].text)
+                audio_file = open(audio_file_path, "rb")
+                st.audio(audio_file, format="audio/mp3")
+            except Exception as e:
+                st.error(f"Error generating text: {e}")
+
+#4 - Personalized Assistance
 if options == "Personalized Assistance 🤖":
     st.header("Personalized Assistance 🤖")
     st.write("This feature provides personalized assistance based on the content of the uploaded image or URL. You can ask questions related to the image.")
 
-    # Upload an image or provide a URL
     uploaded_file = st.file_uploader("Upload an image for analysis:", type=["png", "jpg", "jpeg"])
     image_url = st.text_input("Or provide an image URL 🌐:")
 
@@ -333,122 +361,70 @@ if options == "Personalized Assistance 🤖":
         temp_image_path = None
 
     if temp_image_path:
-        # Function to extract text or objects from the image
-        def analyze_image(image_path):
-            # Extract text (OCR) from the image
-            client = vision.ImageAnnotatorClient()
-            with open(image_path, 'rb') as image_file:
-                content = image_file.read()
-            image = vision.Image(content=content)
 
-            response = client.text_detection(image=image)
-            texts = response.text_annotations
-
-            # If no text is found, try detecting objects
-            if not texts:
-                response = client.object_localization(image=image)
-                objects = response.localized_object_annotations
-                detected_objects = [obj.name for obj in objects]
-                return detected_objects
-            else:
-                # Return extracted text if found
-                extracted_text = texts[0].description
-                return extracted_text
-
-        # Analyze image content
         analysis_result = analyze_image(temp_image_path)
 
-        # Display the analysis result
-        if isinstance(analysis_result, str):  # If text is extracted
+        if isinstance(analysis_result, str):  
             st.subheader("Extracted Text from Image:")
             st.write(analysis_result)
-        else:  # If objects are detected
+        else:  
             st.subheader("Detected Objects in Image:")
             for obj in analysis_result:
                 st.write(f"- {obj}")
 
-        # Initialize session state for the conversation
         if "conversation_history" not in st.session_state:
             st.session_state.conversation_history = []
 
-        # User input for the first question
         user_question = st.text_input("Ask a question about the image:")
 
-        # If the user asks a question
         if user_question:
-            # Add user's question to conversation history
+
             st.session_state.conversation_history.append(f"User: {user_question}")
-            input_prompt = f"""
-            The user uploaded an image and here is the extracted content: {analysis_result}
-            The user is asking: {user_question}
-            Provide a detailed answer based on the content.
-            """
-            try:
-                # Use Google Generative AI or another model to generate an answer based on the image content
-                response = llm.generate(
-                    prompts=[input_prompt],
-                    temperature=0.7,
-                    max_tokens=200
-                )
 
-                generated_answer = response.generations[0][0].text
+            response_text = "I'm not sure about the answer to that question, but here is some info:"
 
-                # Add AI's answer to the conversation history
-                st.session_state.conversation_history.append(f"AI: {generated_answer}")
+            if isinstance(analysis_result, str):  
+                response_text = f"The text in the image says: {analysis_result}. Can you please specify what you'd like to know more about?"
+            elif isinstance(analysis_result, list):  
+                response_text = f"The image contains these objects: {', '.join(analysis_result)}. Could you clarify what you want to know about them?"
 
-                st.subheader("Answer:")
-                st.write(generated_answer)
+            st.session_state.conversation_history.append(f"AI: {response_text}")
 
-                # Provide the answer as speech
-                audio_file_path = text_to_speech(generated_answer)
-                audio_file = open(audio_file_path, "rb")
-                st.audio(audio_file, format="audio/mp3")
+            st.subheader("Answer:")
+            st.write(response_text)
 
-            except Exception as e:
-                st.error(f"Error generating response: {e}")
+            audio_file_path = text_to_speech(response_text)
+            audio_file = open(audio_file_path, "rb")
+            st.audio(audio_file, format="audio/mp3")
 
-        # Display conversation history (Chat-like interface)
         if st.session_state.conversation_history:
             st.subheader("Conversation History:")
             for i in st.session_state.conversation_history:
                 st.write(i)
-            
-            # New input box for follow-up question
+
             follow_up_question = st.text_input("Ask a follow-up question:")
 
             if follow_up_question:
-                # Add user's follow-up question to conversation history
+
                 st.session_state.conversation_history.append(f"User: {follow_up_question}")
-                input_prompt = f"""
-                The user uploaded an image and here is the extracted content: {analysis_result}
-                The user is asking: {follow_up_question}
-                Provide a detailed answer based on the content.
-                """
-                try:
-                    # Use Google Generative AI to generate a follow-up answer
-                    response = llm.generate(
-                        prompts=[input_prompt],
-                        temperature=0.7,
-                        max_tokens=200
-                    )
 
-                    follow_up_answer = response.generations[0][0].text
+                follow_up_response = "I'm still processing the image. Could you please ask more specifically?"
 
-                    # Add AI's follow-up answer to the conversation history
-                    st.session_state.conversation_history.append(f"AI: {follow_up_answer}")
+                if isinstance(analysis_result, str):
+                    follow_up_response = f"The text extracted was: {analysis_result}. What else would you like to know?"
+                elif isinstance(analysis_result, list):
+                    follow_up_response = f"The image contains: {', '.join(analysis_result)}. What would you like to ask about these?"
 
-                    st.subheader("Follow-up Answer:")
-                    st.write(follow_up_answer)
+                st.session_state.conversation_history.append(f"AI: {follow_up_response}")
 
-                    # Provide the follow-up answer as speech
-                    audio_file_path = text_to_speech(follow_up_answer)
-                    audio_file = open(audio_file_path, "rb")
-                    st.audio(audio_file, format="audio/mp3")
+                st.subheader("Follow-up Answer:")
+                st.write(follow_up_response)
 
-                except Exception as e:
-                    st.error(f"Error generating follow-up response: {e}")
+                audio_file_path = text_to_speech(follow_up_response)
+                audio_file = open(audio_file_path, "rb")
+                st.audio(audio_file, format="audio/mp3")
 
-# Footer
+#Footer
 footer_text = """
     <div style="text-align: center; padding: 10px; font-size: 14px; color: #333;">
         Developed by <strong>Nisarga K</strong> | &copy; 2024 | 
